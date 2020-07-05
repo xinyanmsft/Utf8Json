@@ -28,6 +28,12 @@ namespace Utf8Json.Internal.Emit
             {
                 foreach (var item in type.GetAllProperties())
                 {
+                    if (HasJsonIgnore(item))
+                    {
+                        // Skip JsonIgnore attribute
+                        continue;
+                    }
+
                     if (item.GetIndexParameters().Length > 0) continue; // skip indexer
                     if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null) continue;
 
@@ -43,8 +49,14 @@ namespace Utf8Json.Internal.Emit
                     }
                     stringMembers.Add(member.Name, member);
                 }
-                foreach (var item in type.GetAllFields())
+                /*foreach (var item in type.GetAllFields())
                 {
+                    if (item.FieldType.Name.Contains("KeyedResourceList"))
+                    {
+                        // probably should have a special formatter for KeyedResourceList
+                        continue;
+                    }
+
                     if (item.GetCustomAttribute<IgnoreDataMemberAttribute>(true) != null) continue;
                     if (item.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>(true) != null) continue;
                     if (item.IsStatic) continue;
@@ -61,7 +73,7 @@ namespace Utf8Json.Internal.Emit
                         throw new InvalidOperationException("same (custom)name is in type. Type:" + type.Name + " Name:" + member.Name);
                     }
                     stringMembers.Add(member.Name, member);
-                }
+                }*/
             }
 
             // GetConstructor
@@ -154,6 +166,18 @@ namespace Utf8Json.Internal.Emit
                 ctor = null;
                 return false;
             }
+        }
+
+        private static bool HasJsonIgnore(PropertyInfo propertyInfo)
+        {
+            foreach (var attr in propertyInfo.GetCustomAttributes())
+            {
+                if (attr.GetType().Name == "JsonIgnoreAttribute")
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
